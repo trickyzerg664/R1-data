@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "source_repo": "PeterJinGo/nq_hotpotqa_train",
+  "source_revision": "b7d80abfee334a7a91cb377544f09180d58b34f6",
+  "original_dataset_family": "RUC-NLPIR/FlashRAG_datasets",
+  "source_configs": [
+    "nq",
+    "hotpotqa"
+  ],
+  "source_split": "train",
+  "provenance": "Prepared Search-R1 dataset, source revision from existing asset manifest; input SHA256 verified separately.",
+  "input_sha256": "c3cc21e862a8469105de666101578cbff23cdc77e91a803cef102622c89cc4f6",
+  "evaluation_exclusion": "Question text overlap with all sources in the supplied test.parquet",
+  "filters": {
+    "input": 169615,
+    "evaluation_overlap": 10,
+    "duplicate": 11
+  },
+  "counts": {
+    "nq": 79159,
+    "hotpotqa": 90435
+  },
+  "total": 169594,
+  "order": "SHA256 deterministic per-source order, alternating NQ/HotpotQA",
+  "bundle_sha256": "ca28cf1d39aefd4727f01dfde9096cfb9eddab9764895d8170e7c664fc6428b6",
+  "bundle_bytes": 11718860,
+  "target_accepted": 3000,
+  "contains_gold": true,
+  "redistribution": "Preserve dataset-specific attribution and review upstream terms before publishing publicly."
+}

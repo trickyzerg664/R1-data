@@ -1,0 +1,8 @@
+# Python 3.10/3.11. Mock pipeline and tests use only the standard library.
+huggingface-hub==0.26.5
+numpy==1.26.4
+torch==2.5.1
+transformers==4.46.3
+faiss-cpu==1.9.0.post1
+fastapi==0.115.6
+uvicorn==0.34.0

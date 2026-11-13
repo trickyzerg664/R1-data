@@ -1,0 +1,2 @@
+# Maintainer-only: rebuilding the bundled candidate questions from parquet.
+pyarrow==18.1.0

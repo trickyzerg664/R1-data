@@ -1,0 +1,25 @@
+{
+  "index": {
+    "repo": "PeterJinGo/wiki-18-e5-index",
+    "revision": "a4d31160a035f30764604f4827cd8f1d0315eb86",
+    "path": "cache/wiki18/e5_Flat.index",
+    "bytes": 64559075373,
+    "sha256": "69c98463fdb41fc08737d88513c597725f311c44f7ba6dca4b05d8c7c658d166"
+  },
+  "corpus": {
+    "repo": "PeterJinGo/wiki-18-corpus",
+    "revision": "69c1c00ffe7c5554c68d8548355cb22e46aabc51",
+    "path": "cache/wiki18/wiki-18.jsonl",
+    "bytes": 14393573105,
+    "rows": 21015324,
+    "sha256": "43d7d3f58d01d711d95b00b70584211eea639fa46802905a4b7e11cf0617752d"
+  },
+  "model": {
+    "repo": "intfloat/e5-base-v2",
+    "revision": "f52bf8ec8c7124536f0efb74aca902b2995e5bcd",
+    "path": "cache/e5-base-v2/model.safetensors",
+    "bytes": 437955512,
+    "sha256": "d0d559c47d5f71b1d280b13b62a2657f3e3bc70c0786f9ab91a36545e6a8f693"
+  },
+  "provenance": "Existing Search-R1 asset manifest and historical completed download validation. Current reuse checks headers, sizes and first corpus row; full SHA256 revalidation is optional."
+}

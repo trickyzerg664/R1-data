@@ -1,0 +1,37 @@
+{
+  "target_accepted": 3000,
+  "max_attempts": 3,
+  "max_turns": 8,
+  "min_searches": 1,
+  "teacher": {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "thinking": {"type": "disabled"},
+    "temperature": 0.7,
+    "max_tokens": 1024,
+    "timeout": 120,
+    "retries": 4,
+    "backoff_base": 2,
+    "backoff_cap": 60,
+    "idempotency_header": ""
+  },
+  "retriever": {
+    "topk": 3,
+    "device": "auto",
+    "timeout": 60,
+    "retries": 2,
+    "startup_timeout": 600,
+    "port": 0,
+    "min_free_gb": 180,
+    "index_repo": "PeterJinGo/wiki-18-e5-index",
+    "index_revision": "a4d31160a035f30764604f4827cd8f1d0315eb86",
+    "corpus_repo": "PeterJinGo/wiki-18-corpus",
+    "corpus_revision": "69c1c00ffe7c5554c68d8548355cb22e46aabc51",
+    "model_repo": "intfloat/e5-base-v2",
+    "model_revision": "f52bf8ec8c7124536f0efb74aca902b2995e5bcd"
+  },
+  "upload": {
+    "repo_id": "tr1ckyzerg/R1-sft",
+    "private": true
+  }
+}
