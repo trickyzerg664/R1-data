@@ -3,8 +3,12 @@ import hashlib
 import json
 import os
 import sys
+from pathlib import Path
+
+sys.path.insert(0,str(Path(__file__).resolve().parent))
 
 from synth.config import ROOT, load
+from synth.bootstrap import ensure_runtime
 from synth.data import candidates, fixtures
 from synth.engine import process
 from synth.errors import ConfigurationError, StopRun, safe_message
@@ -42,12 +46,29 @@ def run(root, cfg, questions, teacher, retriever, store, uploader=None):
 
 
 def main():
+    ensure_runtime(ROOT,sys.argv[1:])
     parser = argparse.ArgumentParser(description='Search-R1 standalone synthesis (target: 3000 accepted trajectories)')
     parser.add_argument('--mock', action='store_true', help='Only synthetic fixtures, no API, downloads or real retrieval')
     parser.add_argument('--check', action='store_true', help='Check packaged data and linked resources without API or downloads')
     parser.add_argument('--upload-only', action='store_true', help='Retry upload without generation')
+    parser.add_argument('--self-test', action='store_true', help='Isolated local HTTP + FAISS pipeline; no credentials or external API')
+    parser.add_argument('--retriever-smoke', action='store_true', help='Load real local resources and search once without teacher API')
     args = parser.parse_args()
     root, cfg = load()
+    if args.self_test:
+        from synth.selftest import execute
+        return execute(root,cfg)
+    if args.retriever_smoke:
+        ensure(root,cfg['retriever'])
+        print('Starting real Retriever (full Flat index; no teacher API)...',flush=True)
+        with Retriever(root,cfg['retriever']) as retriever:
+            docs=retriever.search('What is the capital of France?')
+        if len(docs)!=3: raise SystemExit('Real retrieval smoke failed: expected three documents')
+        result={'status':'passed','teacher_api_calls':0,'query':'What is the capital of France?',
+                'documents':docs}
+        (root/'output/retriever_smoke.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+        print(json.dumps({'retriever_smoke':'passed','documents':len(docs),'teacher_api_calls':0},indent=2))
+        return 0
     if args.mock:
         root = ROOT/'output/mock'
         (root/'output').mkdir(parents=True,exist_ok=True)

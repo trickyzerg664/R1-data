@@ -1,0 +1,24 @@
+{
+  "filename": "runtime-linux-x86_64-py310-cpu.tar.gz",
+  "bytes": 259602238,
+  "sha256": "c488d69bb51927d5f065f9276e9133ff6fe7d460e87c520c9130717ea3515e75",
+  "python": "3.10.16",
+  "platform": "linux-x86_64",
+  "torch": "2.5.1+cpu",
+  "tested_glibc": "2.35",
+  "includes": [
+    "Python interpreter",
+    "all runtime dependencies"
+  ],
+  "excludes": [
+    "API credentials",
+    "HF credentials",
+    "questions",
+    "models",
+    "corpus",
+    "FAISS index"
+  ],
+  "hf_repo": "tr1ckyzerg/R1-sft",
+  "hf_path": "runtime/runtime-linux-x86_64-py310-cpu.tar.gz",
+  "download_url": "https://huggingface.co/datasets/tr1ckyzerg/R1-sft/resolve/628f7d3ef703aed44eaae8deff4d14a6276d72f7/runtime/runtime-linux-x86_64-py310-cpu.tar.gz"
+}

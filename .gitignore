@@ -3,6 +3,8 @@
 __pycache__/
 *.pyc
 cache/
+/runtime
+*.tar.gz
 output/
 data/raw/
 *.sqlite3*

@@ -21,7 +21,7 @@ class Retriever:
             port = sock.getsockname()[1]
         self.url = f'http://127.0.0.1:{port}'
         self.log = (self.root/'output/retriever.log').open('a', encoding='utf-8')
-        command = [sys.executable, str(self.root/'scripts/retriever_server.py'), '--port', str(port),
+        command = [sys.executable, '-I', str(self.root/'scripts/retriever_server.py'), '--port', str(port),
                    '--identity', self.identity, '--device', self.cfg['device']]
         self.process = subprocess.Popen(command, cwd=self.root, stdout=self.log, stderr=self.log)
         deadline = time.monotonic() + self.cfg['startup_timeout']

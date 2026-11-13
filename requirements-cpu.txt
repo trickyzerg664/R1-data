@@ -1,0 +1,4 @@
+# Portable Linux CPU runtime; uses the same exact FAISS Flat search.
+--extra-index-url https://download.pytorch.org/whl/cpu
+-r requirements.txt
+torch==2.5.1+cpu

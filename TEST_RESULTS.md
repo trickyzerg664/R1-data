@@ -1,57 +1,52 @@
-# 验证结果（2026-11-13）
+# 实际验证结果（2026-11-13）
 
-目标环境：用户指定的远程容器，Python 3.10.12。未安装/升级该容器的全局依赖。
+## 新环境与搬移
 
-## DeepSeek / HF 配置更新后的验证
+- 固定 CPython 3.10.16 + 35 个锁定运行依赖，不继承系统 site-packages。
+- pip check：No broken requirements found。
+- 实测 PyTorch 2.5.1+cpu、FAISS 1.9.0.post1、NumPy 1.26.4、Transformers 4.46.3。
+- 独立新目录、不复制 .env、无 API Key、无 .venv，一次命令建环境并完成 self-test。
+  使用已下载 wheel 缓存离线安装；公共依赖下载另已成功执行。
+- 环境包解压到另一目录后 start.sh --self-test 通过，使用包内 Python 3.10.16。
+- 故意设置不可用 PYTHONPATH，Python -I 隔离成功。
+- 最终额外验证：PATH 不含任何系统 Python，只放 Linux shell 工具和环境压缩包，
+  `bash start.sh --self-test` 自动校验 SHA256、解压包内 Python 并通过全流程。
 
-HF 目的仓库已配置为 `tr1ckyzerg/R1-sft`；教师预设 `deepseek-flash`，
-`thinking.type=disabled`，官方 Base URL 已填入 `.env.example`。
+## 本地 HTTP 全流程
 
-最终容器测试：**15/15 通过，0.994 秒**。在下方原有 13 项测试基础上增加：
-DeepSeek HTTP 402 即使没有错误正文也停止并触发上传；请求明确传入 disabled thinking，
-同时保留教师实际返回的标签内容。原有错误恢复测试全部通过。
+3 条合成 fixture 合格；6 次本地 HTTP 教师请求；3 次实际 FAISS Flat 库检索；
+再次处理完成题不新增请求；生成 JSONL、stats、ZIP，完成本地收件。
+实际启动、等待和清理 Retriever 子进程，外部教师调用 0。
+fixture 使用哈希向量和合成文档，输出隔离保存，不作为正式语料。
 
-`main.py --check`：候选题与既有资源结构检查通过，
-`teacher_model_configured=true`、`upload_repo_configured=true`。
+## 完整真实检索
 
-运行环境仅检查凭证是否存在，不输出值：本项目未检测到 API_BASE_URL、API_KEY、HF_TOKEN。
-当前系统 Python 可找到 torch、transformers、fastapi、uvicorn、huggingface_hub，找不到 faiss。
-Git origin 已关联用户指定的 R1-data 仓库；没有 commit/push。
-未调用真实教师 API、未发起 HF 上传，未启动完整真实 Retriever。
+start.sh --retriever-smoke **通过**：完整加载 64559075373 字节、768 维、21015324
+个向量的 Flat IP 索引；实际加载 E5；扫描验证语料行数与索引一致；搜索
+“What is the capital of France?” 返回 3 份真实文档并清理子进程。教师调用 0。
+实际结果在本地 output/retriever_smoke.json，不提交 Git。
 
-后续本地授权更新：已将 HF_TOKEN 写入运行机器 `.env`，文件权限 600，Git 忽略；
-未配置教师 API Key。再次执行全部 15 项离线测试通过（0.908 秒），Mock 模式无需 Key 可运行。
-此配置只在本地，不随源码和候选题推送。上述“未检测到凭证”为首次检查记录。
+## 恢复测试
 
-## 首版骨架验证记录
+独立 Python 3.10.16：**15/15 通过，1.092 秒**。
+覆盖多轮、429 等待、额度耗尽停止并触发上传、401 不无限重试、单题错误继续、
+子进程退出暂停教师、中断恢复、上传失败保留文件、异工作目录启动、超时 uncertain、
+崩溃 pending 恢复、空检索合法，以及 DeepSeek 402/请求参数处理。
 
-`python3 -m unittest discover -s tests -v`：**13/13 通过**（最终版本，0.827 秒）。
+## 数据与环境分发
 
-覆盖：Mock 多轮和目标停止、429 Retry-After、额度耗尽保存并触发上传、401 不重试、
-单题格式失败不影响后题、真实短命子进程退出后阻止教师调用、中断后从检索阶段恢复、
-上传失败保留文件和仅重传、异工作目录启动、超时有限重试并标记不确定、崩溃 pending
-标记 uncertain、空检索合法、普通 429 与明确额度不足分类。
+- 候选题 169594：NQ 79159，HotpotQA 90435；排除评测重叠 10、重复 11。
+- 候选 gzip 11718860 字节；输入/输出 SHA256 见 data/manifest.json。
+- 环境包 259602238 字节，SHA256：
+  c488d69bb51927d5f065f9276e9133ff6fe7d460e87c520c9130717ea3515e75。
+- 环境包和依赖锁实际上传 HF private 仓库 tr1ckyzerg/R1-sft 的 runtime/，
+  commit 628f7d3ef703aed44eaae8deff4d14a6276d72f7。
+- .env 和凭证未进入 Git 或环境包。
 
-`main.py --check` 从其他工作目录执行：通过。
+## 限制
 
-- 候选题：169594（NQ 79159，HotpotQA 90435）。
-- 过滤：输入 169615；排除评测重叠 10、重复问题 11。
-- 候选 gzip：11718860 字节；SHA256
-  `ca28cf1d39aefd4727f01dfde9096cfb9eddab9764895d8170e7c664fc6428b6`。
-- 输入 parquet SHA256 与原资产清单一致。
-- 现有索引头、长度检查通过：Flat IP，768 维，21015324 个向量，64559075373 字节。
-- 现有语料首行结构通过：14393573105 字节。
-- E5 配置、权重及 tokenizer 文件存在。
-- 教师模型 ID、HF 目的仓库均未配置，检查结果明确报告 false。
-
-`main.py --mock` 从其他工作目录执行：3 条合格 fixture，6 次 Mock API，3 次 Mock 检索，
-停止原因 `target_reached`；独立保存在 `output/mock/output/`。
-
-## 尚未验证
-
-- 没有调用真实付费 API，Mock 调用数不是实际 API 账单。
-- 没有发起真实 Hugging Face 上传；上传成功/失败行为通过替身验证。
-- 没有加载完整 64.6 GB FAISS 索引或启动完整真实 Retriever。
-- 现有大型资源未重新完整计算 SHA256；清单保留原下载流程的历史校验值。
-- 没有实际执行首次大文件下载，也未验证 Mac 的依赖安装和内存承载能力。
-- 没有 Git commit 或 push，未修改原 Search-R1 项目及共享资源。
+- 没有真实 DeepSeek Key，未调用付费 API，未验证教师实际格式遵从率。
+- 未生成正式 3000 条轨迹，未把 fixture 当正式数据上传。
+- 未在全新设备重下载约 80 GB 资源；本轮复用既有资源。
+- 环境包仅在 Linux x86_64、glibc 2.35 实测，不含 CUDA；其他平台未经验证。
+- 当前 host 的 HF DNS 解析异常，上传使用 host3 已有代理，未修改系统 DNS。
