@@ -31,7 +31,9 @@ def inspect(root):
 
 def ensure(root, cfg):
     existing = inspect(root)
-    if all(existing[k] for k in ('index','corpus','model')): return existing
+    if all(existing[k] for k in ('index','corpus','model')):
+        verify(root)
+        return existing
     # A partial or incompatible linked resource must never be overwritten.
     if (root/'cache/wiki18').is_symlink() or (root/'cache/e5-base-v2').is_symlink():
         raise ConfigurationError('链接的现有资源缺失或损坏，请检查资源完整性，不自动覆盖共享文件。')
@@ -71,12 +73,36 @@ def ensure(root, cfg):
     result = inspect(root)
     if not all(result[k] for k in ('index','corpus','model')):
         raise ConfigurationError('下载文件完整性检查失败，不启动 Retriever。')
-    manifest = json.loads((root/'assets.json').read_text(encoding='utf-8'))
-    for name, item in manifest.items():
-        if not isinstance(item,dict): continue
+    verify(root)
+    return result
+
+
+def verify(root):
+    manifest=json.loads((root/'assets.json').read_text(encoding='utf-8'))
+    items={name:item for name,item in manifest.items() if isinstance(item,dict)}
+    def signature():
+        result={}
+        for name,item in items.items():
+            stat=(root/item['path']).stat()
+            result[name]=dict(path=item['path'],sha256=item['sha256'],size=stat.st_size,
+                              mtime_ns=stat.st_mtime_ns,ctime_ns=stat.st_ctime_ns,
+                              inode=stat.st_ino,device=stat.st_dev)
+        return result
+    before=signature()
+    marker=root/'cache/resource-verification.json'
+    if marker.is_file():
+        try:
+            if json.loads(marker.read_text())==before: return
+        except (ValueError,OSError): pass
+        marker.unlink()
+    for name,item in items.items():
+        print('Verifying resource SHA256: '+name,flush=True)
         h = hashlib.sha256()
         with (root/item['path']).open('rb') as f:
             for chunk in iter(lambda:f.read(8*1024*1024),b''): h.update(chunk)
         if h.hexdigest() != item['sha256']:
             raise ConfigurationError('下载资源 SHA256 校验失败：'+name)
-    return result
+    if signature()!=before: raise ConfigurationError('资源校验期间文件发生变化，请确认资源准备已完成后重试。')
+    tmp=marker.with_suffix('.tmp')
+    tmp.write_text(json.dumps(before,sort_keys=True)+'\n')
+    tmp.replace(marker)

@@ -33,6 +33,11 @@ class Store:
         with self.db:
             self.db.execute('INSERT OR REPLACE INTO meta VALUES (?,?)', (key, dumps(value)))
 
+    def set_upload(self, receipt, pending):
+        with self.db:
+            for key,value in (('upload',receipt),('upload_pending',pending)):
+                self.db.execute('INSERT OR REPLACE INTO meta VALUES (?,?)',(key,dumps(value)))
+
     def get(self, qid):
         row = self.db.execute('SELECT payload FROM questions WHERE id=?', (qid,)).fetchone()
         return json.loads(row[0]) if row else None
@@ -88,6 +93,7 @@ class Store:
                     responses_without_usage=unknown_usage,
                     uncertain_requests=self.db.execute("SELECT COUNT(*) FROM calls WHERE status='uncertain'").fetchone()[0],
                     retrievals=self.db.execute('SELECT COUNT(*) FROM retrievals').fetchone()[0],
+                    upload_attempts=self.meta('upload_attempts_total') or 0,
                     errors=dict(self.db.execute('SELECT kind,COUNT(*) FROM errors GROUP BY kind')),
                     stop_reason=reason, upload=upload, run_id=self.meta('run_id'))
 

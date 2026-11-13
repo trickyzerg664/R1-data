@@ -12,7 +12,7 @@ from synth.bootstrap import ensure_runtime
 from synth.data import candidates, fixtures
 from synth.engine import process
 from synth.errors import ConfigurationError, StopRun, safe_message
-from synth.output import finalize
+from synth.output import finalize, resume_pending_upload, upload_succeeded
 from synth.resources import inspect, ensure
 from synth.retriever import Retriever, MockRetriever
 from synth.store import Store
@@ -82,12 +82,16 @@ def main():
     store = Store(root/'output/state.sqlite3')
     try:
         if args.upload_only:
-            finalize(root,store,store.meta('stop_reason') or 'upload_only',cfg['upload'])
-            return 0
+            stats=finalize(root,store,store.meta('stop_reason') or 'upload_only',cfg['upload'])
+            return 0 if upload_succeeded(stats['upload']) else 3
         if args.mock:
             stats = run(root,cfg,fixtures(),MockTeacher(store),MockRetriever(),store,
                         uploader=lambda *a:{'status':'skipped_mock'})
         else:
+            pending=resume_pending_upload(root,store,cfg['upload'])
+            if pending is not None and not upload_succeeded(pending['upload']):
+                print('待上传结果仍未送达，本次不发起新的教师 API 请求。',file=sys.stderr)
+                return 3
             try:
                 # Validate teacher configuration before any large download or paid request.
                 teacher = Teacher(cfg['teacher'],store)
@@ -115,6 +119,7 @@ def main():
                 print('Global error: '+safe_message(exc,[os.environ.get('API_KEY',''),os.environ.get('HF_TOKEN','')]),file=sys.stderr)
                 stats = finalize(root,store,'global_error',cfg['upload'])
         store.set_meta('stop_reason',stats['stop_reason'])
+        if not upload_succeeded(stats['upload']): return 3
         return 0 if stats['stop_reason'] in ('target_reached','candidates_exhausted') else 2
     finally: store.close()
 
